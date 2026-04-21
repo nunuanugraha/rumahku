@@ -1,0 +1,21 @@
+{
+    "name": "RumahKu - Manajemen",
+    "short_name": "RumahKu",
+    "description": "Aplikasi Manajemen Rumah Tangga",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#F7F5F2",
+    "theme_color": "#16A34A",
+    "icons": [
+        {
+            "src": "icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
