@@ -36,10 +36,7 @@ Aplikasi ini dibangun menggunakan pendekatan **Clean Code** dan tanpa ketergantu
 
 | Desktop View | Mobile View |
 | :--- | :--- |
-| ![Desktop](https://via.placeholder.com/600x300?text=RumahKu+Desktop+Preview) | ![Mobile](https://via.placeholder.com/200x400?text=RumahKu+Mobile+Preview) |
-
-> *Catatan: Silakan ganti URL gambar di atas dengan screenshot asli aplikasi Anda.*
-
+| ![Desktop](./img/desktop.png) | ![Mobile](./img/mobile.png) |
 ---
 
 ## 🚀 Cara Instalasi
