@@ -2,9 +2,23 @@
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("sw.js")
-      .then((reg) => console.log("Service Worker terdaftar!", reg))
-      .catch((err) => console.log("Service Worker gagal terdaftar", err));
+  .register("/sw.js")
+  .then((reg) => {
+    console.log("Service Worker terdaftar!", reg);
+
+    reg.onupdatefound = () => {
+      const newWorker = reg.installing;
+
+      newWorker.onstatechange = () => {
+        if (newWorker.state === "installed") {
+          if (navigator.serviceWorker.controller) {
+            console.log("Update tersedia 🚀");
+          }
+        }
+      };
+    };
+  })
+  .catch((err) => console.log("Service Worker gagal", err));
   });
 }
 // Updated to Material Symbols Icon Names
@@ -734,3 +748,152 @@ function getRawNumber(id) {
   });
 });
 renderAll();
+
+/* =========================
+   PWA INSTALL BUTTON
+   ========================= */
+
+let deferredPrompt;
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+
+  const btn = document.getElementById("btn-install");
+  if (btn) btn.style.display = "inline-flex";
+});
+
+function installApp() {
+  if (!deferredPrompt) return;
+
+  deferredPrompt.prompt();
+
+  deferredPrompt.userChoice.then((choice) => {
+    if (choice.outcome === "accepted") {
+      console.log("App berhasil diinstall 🚀");
+    }
+    deferredPrompt = null;
+  });
+}
+
+window.installApp = installApp;
+
+
+/* =========================
+   NOTIFICATION SYSTEM (PWA SAFE)
+   ========================= */
+
+// REQUEST PERMISSION
+function requestNotif() {
+  if (!("Notification" in window)) {
+    toast("Browser tidak support notif");
+    return;
+  }
+
+  Notification.requestPermission().then((perm) => {
+    if (perm === "granted") {
+      toast("Notifikasi aktif 🔔");
+      sendNotif("RumahKu Aktif", "Notifikasi berhasil diaktifkan!");
+    } else {
+      toast("Notifikasi ditolak");
+    }
+  });
+}
+
+window.requestNotif = requestNotif;
+
+
+// SEND NOTIFICATION (SERVICE WORKER)
+function sendNotif(title, body) {
+  if (Notification.permission === "granted") {
+    navigator.serviceWorker.getRegistration().then((reg) => {
+      if (reg) {
+        reg.showNotification(title, {
+          body: body,
+          icon: "/icons/icon-192.png",
+          badge: "/icons/icon-192.png",
+          vibrate: [200, 100, 200],
+          tag: "rumahku-notif"
+        });
+      } else {
+        // fallback kalau SW belum siap
+        new Notification(title, {
+          body: body,
+          icon: "/icons/icon-192.png"
+        });
+      }
+    });
+  }
+}
+
+
+/* =========================
+   SMART NOTIFICATION LOGIC
+   ========================= */
+
+let notifiedOverBudget = false;
+
+// CEK BUDGET
+function checkBudgetNotif() {
+  const spent = txs.reduce((s, t) => s + t.amount, 0);
+
+  // OVER BUDGET → notif sekali
+  if (spent > budget && !notifiedOverBudget) {
+    sendNotif("⚠️ Budget Habis!", "Pengeluaran kamu melebihi anggaran!");
+    notifiedOverBudget = true;
+  }
+
+  // RESET kalau balik normal
+  if (spent <= budget) {
+    notifiedOverBudget = false;
+  }
+}
+
+// AUTO CHECK (tidak spam)
+setInterval(checkBudgetNotif, 10000); // 10 detik
+
+
+/* =========================
+   REALTIME TRIGGER
+   ========================= */
+
+// 🔥 Tambahkan ini di AKHIR function saveTx()
+const _oldSaveTx = saveTx;
+saveTx = function () {
+  _oldSaveTx();
+  checkBudgetNotif();
+};
+
+
+/* =========================
+   OPTIONAL SMART REMINDER
+   ========================= */
+
+// cek item belum dibeli
+function checkPendingItemsNotif() {
+  const pending = items.filter(i => !i.bought);
+
+  if (pending.length >= 5) {
+    sendNotif(
+      "🛒 Banyak Item Belum Dibeli",
+      `${pending.length} item masih pending`
+    );
+  }
+}
+
+// jalan tiap 30 detik
+setInterval(checkPendingItemsNotif, 30000);
+
+
+/* =========================
+   AUTO WELCOME NOTIF
+   ========================= */
+
+setTimeout(() => {
+  if (Notification.permission === "granted") {
+    sendNotif(
+      "🏠 RumahKu Siap!",
+      "Yuk lanjut isi kebutuhan rumah kamu"
+    );
+  }
+}, 8000);
